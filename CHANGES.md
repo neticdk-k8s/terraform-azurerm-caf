@@ -15,7 +15,7 @@ It caused a major bug in our landingzone module, because the resource_location h
 - Date: 26/10/2023
 - File(s): modules/compute/aks/aks.tf
 - Who: MFR
-- PR:
+- PR: https://github.com/neticdk-k8s/terraform-azurerm-caf/pull/1/files
 
 ### Reason:
 I was getting tired of configuring in my local .terraform folder everytime when I had to upgrade a cluster. I had to hardcode max_surge to 3 every time
