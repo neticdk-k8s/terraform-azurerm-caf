@@ -2,7 +2,7 @@
 
 ## Remove breaking bug caused by unnecessary var.resource_location variable
 - Date: 22/09/2023
-- File: modules/diagnostics/module.tf
+- File(s): modules/diagnostics/module.tf
 - Who: MFR
 - PR: It's missing, sorry
 
@@ -23,4 +23,3 @@ I was getting tired of configuring in my local .terraform folder everytime when 
 Then I also had to add max_surge in main.tf file.
 
 But now we can just add the max_surge in the main.tf file without fixing it locally in .terraform first
-
