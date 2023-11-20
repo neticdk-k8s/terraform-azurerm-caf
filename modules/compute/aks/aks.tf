@@ -552,7 +552,8 @@ resource "azurerm_kubernetes_cluster_node_pool" "nodepools" {
   dynamic "upgrade_settings" {
     for_each = try(each.value.upgrade_settings, null) == null ? [] : [1]
     content {
-      max_surge = upgrade_settings.value.max_surge
+      #max_surge = upgrade_settings.value.max_surge
+      max_surge = lookup(each.value.upgrade_settings, "max_surge") # This shit works - MFR
     }
   }
 
