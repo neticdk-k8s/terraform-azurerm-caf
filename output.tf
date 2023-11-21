@@ -13,5 +13,5 @@ output "global_settings" {
 }
 
 output "random_string_prefix" {
-  value = random_string.prefix.result
+  value = random_string.prefix[0].result
 }
