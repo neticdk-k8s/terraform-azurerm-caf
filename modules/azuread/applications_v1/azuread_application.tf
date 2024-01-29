@@ -32,7 +32,7 @@ resource "azuread_application" "app" {
       requested_access_token_version = try(var.settings.api.requested_access_token_version, null)
 
       dynamic "oauth2_permission_scope" {
-        for_each = try(var.settings.api.oauth2_permission_scopes, [])
+        for_each = try(var.settings.api.oauth2_permission_scope, [])
         content {
           admin_consent_description  = oauth2_permission_scope.value.admin_consent_description
           admin_consent_display_name = oauth2_permission_scope.value.admin_consent_display_name
