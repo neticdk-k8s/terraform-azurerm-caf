@@ -18,7 +18,7 @@ azuread_applications = {
       #   "someID"
       # ]
 
-      oauth2_permission_scopes = [
+      oauth2_permission_scope = [
         {
           admin_consent_description  = "Allow to administer app."
           admin_consent_display_name = "Administer app"

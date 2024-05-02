@@ -63,6 +63,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
     os_disk_type                  = try(var.settings.default_node_pool.os_disk_type, null)
     os_sku                        = try(var.settings.default_node_pool.os_sku, null)
     tags                          = merge(try(var.settings.default_node_pool.tags, {}), local.tags)
+    temporary_name_for_rotation   = try(var.settings.default_node_pool.temporary_name_for_rotation, null)
     type                          = try(var.settings.default_node_pool.type, "VirtualMachineScaleSets")
     ultra_ssd_enabled             = try(var.settings.default_node_pool.ultra_ssd_enabled, false)
     vm_size                       = var.settings.default_node_pool.vm_size
@@ -96,11 +97,11 @@ resource "azurerm_kubernetes_cluster" "aks" {
       }
     }
     dynamic "linux_os_config" {
-      for_each = try(var.settings.default_node_pool.linux_os_config, null) == null ? [] : [1]
+      for_each = try(var.settings.default_node_pool.linux_os_config, null) == null ? [] : [var.settings.default_node_pool.linux_os_config]
       content {
-        swap_file_size_mb = try(linux_os_config.value.allowed_unsafe_sysctls, null)
+        swap_file_size_mb = try(linux_os_config.value.swap_file_size_mb, null)
         dynamic "sysctl_config" {
-          for_each = try(linux_os_config.value.sysctl_config, null) == null ? [] : [1]
+          for_each = try(linux_os_config.value.sysctl_config, null) == null ? [] : [linux_os_config.value.sysctl_config]
           content {
             fs_aio_max_nr                      = try(sysctl_config.value.fs_aio_max_nr, null)
             fs_file_max                        = try(sysctl_config.value.fs_file_max, null)
@@ -476,11 +477,11 @@ resource "azurerm_kubernetes_cluster_node_pool" "nodepools" {
     }
   }
   dynamic "linux_os_config" {
-    for_each = try(each.value.linux_os_config, null) == null ? [] : [1]
+    for_each = try(each.value.linux_os_config, null) == null ? [] : [each.value.linux_os_config]
     content {
-      swap_file_size_mb = try(linux_os_config.value.allowed_unsafe_sysctls, null)
+      swap_file_size_mb = try(linux_os_config.value.swap_file_size_mb, null)
       dynamic "sysctl_config" {
-        for_each = try(linux_os_config.value.sysctl_config, null) == null ? [] : [1]
+        for_each = try(linux_os_config.value.sysctl_config, null) == null ? [] : [linux_os_config.value.sysctl_config]
         content {
           fs_aio_max_nr                      = try(sysctl_config.value.fs_aio_max_nr, null)
           fs_file_max                        = try(sysctl_config.value.fs_file_max, null)
@@ -551,7 +552,8 @@ resource "azurerm_kubernetes_cluster_node_pool" "nodepools" {
   dynamic "upgrade_settings" {
     for_each = try(each.value.upgrade_settings, null) == null ? [] : [1]
     content {
-      max_surge = upgrade_settings.value.max_surge
+      #max_surge = upgrade_settings.value.max_surge
+      max_surge = lookup(each.value.upgrade_settings, "max_surge") # This shit works - MFR
     }
   }
 
