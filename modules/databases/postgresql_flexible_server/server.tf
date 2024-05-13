@@ -57,6 +57,15 @@ resource "azurerm_postgresql_flexible_server" "postgresql" {
     }
   }
 
+  dynamic "identity" {
+    for_each = lookup(var.settings, "identity", {}) == {} ? [] : [1]
+
+    content {
+      type = var.settings.identity.type
+      identity_ids = var.settings.identity.identity_ids
+    }
+  }
+
   lifecycle {
     ignore_changes = [
       private_dns_zone_id,
