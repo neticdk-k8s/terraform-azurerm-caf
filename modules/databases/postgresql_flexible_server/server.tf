@@ -62,7 +62,7 @@ resource "azurerm_postgresql_flexible_server" "postgresql" {
 
     content {
       type = var.settings.identity.type
-      identity_ids = local.managed_identities
+      identity_ids = var.settings.identity.identity_ids
     }
   }
 

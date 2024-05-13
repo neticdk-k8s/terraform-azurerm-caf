@@ -34,7 +34,3 @@ variable "private_endpoints" {}
 variable "private_dns" {
   default = {}
 }
-
-variable "managed_identities" {
-  default = {}
-}
