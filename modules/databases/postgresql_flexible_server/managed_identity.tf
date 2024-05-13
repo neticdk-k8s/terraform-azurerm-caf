@@ -7,6 +7,6 @@ module "managed_identity" {
   resource_group_name = local.resource_group_name
   global_settings     = var.global_settings
   settings            = each.value
-  base_tags           = var.base_tags_msi
+  base_tags           = local.tags_msi
   client_config       = var.client_config
 }
