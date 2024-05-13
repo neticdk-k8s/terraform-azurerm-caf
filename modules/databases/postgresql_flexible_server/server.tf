@@ -62,7 +62,7 @@ resource "azurerm_postgresql_flexible_server" "postgresql" {
 
     content {
       type = var.settings.identity.type
-      identity_ids = [var.managed_identities[try(var.settings.identity.lz_key, var.client_config.landingzone_key)][var.settings.identity.managed_identity_key].id]
+      identity_ids = var.settings.identity.managed_identity_key.id
     }
   }
 
