@@ -41,3 +41,7 @@ variable "private_dns" {
 }
 
 variable "managed_identity" {}
+
+variable "managed_identities" {
+  default = {}
+}
