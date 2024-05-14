@@ -58,11 +58,11 @@ resource "azurerm_postgresql_flexible_server" "postgresql" {
   }
 
   dynamic "identity" {
-    for_each = lookup(var.settings, "identity", {}) == {} ? [] : [1]
+    for_each = lookup(var.settings.identity, null) == null ? [] : [1]
 
     content {
       type = var.settings.identity.type
-      identity_ids = var.settings.identity.managed_identity_key.id
+      identity_ids = [var.managed_identities[var.settings.identity.managed_identity_key.id]]
     }
   }
 
