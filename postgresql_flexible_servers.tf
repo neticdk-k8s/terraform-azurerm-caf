@@ -12,11 +12,9 @@ module "postgresql_flexible_servers" {
   settings          = each.value
   resource_group    = local.combined_objects_resource_groups[try(each.value.resource_group.lz_key, local.client_config.landingzone_key)][try(each.value.resource_group.key, each.value.resource_group_key)]
   base_tags         = local.global_settings.inherit_tags
-  base_tags_msi     = try(local.global_settings.inherit_tags, false) ? try(local.combined_objects_resource_groups[try(each.value.resource_group.lz_key, local.client_config.landingzone_key)][try(each.value.resource_group.key, each.value.resource_group_key)].tags, {}) : {}
   vnets             = local.combined_objects_networking
   private_endpoints = try(each.value.private_endpoints, {})
   private_dns       = local.combined_objects_private_dns
-  managed_identity  = try(each.value.managed_identity, {})
 
   remote_objects = {
     subnet_id           = can(each.value.vnet.subnet_key) ? local.combined_objects_networking[try(each.value.vnet.lz_key, local.client_config.landingzone_key)][each.value.vnet.key].subnets[each.value.vnet.subnet_key].id : null
