@@ -58,7 +58,7 @@ resource "azurerm_postgresql_flexible_server" "postgresql" {
   }
 
   dynamic "identity" {
-    for_each = lookup(var.settings.identity, null) == null ? [] : [1]
+    for_each = lookup(var.settings.identity, {}) == {} ? [] : [1]
 
     content {
       type = var.settings.identity.type
