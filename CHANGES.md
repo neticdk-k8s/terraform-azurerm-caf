@@ -1,5 +1,14 @@
 # This file is to see deviants done by Netic
 
+## Add ignore_changes for Entra ID Groups created by the groups module
+- Date: 02/09/2024
+- File(s): modules/azuread/groups/group.tf
+- Who: MFR
+- PR: https://github.com/neticdk-k8s/terraform-azurerm-caf/pull/9/files
+
+### Reason:
+In our management module for terraform-netic-azure we use the resource azuread_administrative_unit_member to administrate members of AUs
+
 ## Add default_to_oauth_authentication to storage_account module
 - Date: 07/02/2024
 - File(s): modules/storage_account/storage_account.tf
