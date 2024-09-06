@@ -1,5 +1,14 @@
 # This file is to see deviants done by Netic
 
+## Added support for auto grow for Postgres Flexible Server Instance
+- Date: 06/09/2024
+- File(s): modules/databases/postgresql_flexible_server/server.tf
+- Who: MFR
+- PR: https://github.com/neticdk-k8s/terraform-azurerm-caf/pull/10/files
+
+### Reason:
+The feature "auto_grow_enabled" were missing for the resource azurerm_postgresql_flexible_server.postgressql in the sub-module postgresql_flexible_server.
+
 ## Add ignore_changes for Entra ID Groups created by the groups module
 - Date: 02/09/2024
 - File(s): modules/azuread/groups/group.tf

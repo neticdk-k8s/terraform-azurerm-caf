@@ -16,6 +16,7 @@ resource "azurerm_postgresql_flexible_server" "postgresql" {
   sku_name            = try(var.settings.sku_name, null)
   zone                = try(var.settings.zone, null)
   storage_mb          = try(var.settings.storage_mb, null)
+  auto_grow_enabled   = try(var.settings.auto_grow_enabled, null)
 
   delegated_subnet_id = var.remote_objects.subnet_id
   private_dns_zone_id = var.remote_objects.private_dns_zone_id
