@@ -16,6 +16,7 @@ resource "azurerm_postgresql_flexible_server" "postgresql" {
   sku_name            = try(var.settings.sku_name, null)
   zone                = try(var.settings.zone, null)
   storage_mb          = try(var.settings.storage_mb, null)
+  auto_grow_enabled   = try(var.settings.auto_grow_enabled, null)
 
   delegated_subnet_id = var.remote_objects.subnet_id
   private_dns_zone_id = var.remote_objects.private_dns_zone_id
@@ -54,6 +55,15 @@ resource "azurerm_postgresql_flexible_server" "postgresql" {
     content {
       mode                      = "ZoneRedundant"
       standby_availability_zone = var.settings.zone == null ? null : var.settings.high_availability.standby_availability_zone
+    }
+  }
+
+  dynamic "identity" {
+    for_each = try(var.settings.identity, null) == null ? [] : [var.settings.identity]
+
+    content {
+      type = var.settings.identity.type
+      identity_ids = [var.remote_objects.managed_identities[var.client_config.landingzone_key][var.settings.identity.managed_identity_key].id]
     }
   }
 
