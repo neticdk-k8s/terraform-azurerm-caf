@@ -1,5 +1,15 @@
 # This file is to see deviants done by Netic
 
+## Added support for customer_managed_key for postgresql_flexible_server
+- Date: 14/10/2024
+- File(s): modules/databases/postgresql_flexible_server/server.tf
+- Who: MFR
+- PR: https://github.com/neticdk-k8s/terraform-azurerm-caf/pull/13/files
+
+### Reason:
+So we can use CMKs instead of Microsoft managed keys.
+
+
 ## Added support for auto grow for Postgres Flexible Server Instance
 - Date: 06/09/2024
 - File(s): modules/databases/postgresql_flexible_server/server.tf
