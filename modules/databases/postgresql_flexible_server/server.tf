@@ -66,6 +66,17 @@ resource "azurerm_postgresql_flexible_server" "postgresql" {
       identity_ids = [var.remote_objects.managed_identities[var.client_config.landingzone_key][var.settings.identity.managed_identity_key].id]
     }
   }
+  
+  dynamic "customer_managed_key" {
+    for_each = try(var.settings.customer_managed_key, null) == null ? [] : [var.settings.customer_managed_key] 
+
+    content {
+      key_vault_key_id = try(var.settings.customer_managed_key.key_vault_key_id, null)
+      primary_user_assigned_identity_id = try(var.settings.customer_managed_key.primary_user_assigned_identity_id, null)
+      geo_backup_key_vault_key_id = try(var.settings.customer_managed_key.geo_backup_key_vault_key_id, null)
+      geo_backup_user_assigned_identity_id = try(var.settings.customer_managed_key.geo_backup_user_assigned_identity_id, null)
+    }
+  }
 
   lifecycle {
     ignore_changes = [
