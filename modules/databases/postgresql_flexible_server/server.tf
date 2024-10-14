@@ -71,10 +71,10 @@ resource "azurerm_postgresql_flexible_server" "postgresql" {
     for_each = try(var.settings.customer_managed_key, null) == null ? [] : [var.settings.customer_managed_key] 
 
     content {
-      key_vault_key_id                     = var.remote_objects.keyvault_keys[var.settings.customer_managed_key.key_vault_key_key].id # Use key_vault_key_key to get id of the keyvault key
-      primary_user_assigned_identity_id    = try(var.remote_objects.managed_identities[var.settings.customer_managed_key.primary_user_assigned_identity_key].id, null) # Use primary_user_assigned_identity_key to get id of managed identity
-      geo_backup_key_vault_key_id          = try(var.remote_objects.keyvault_keys[var.settings.customer_managed_key.geo_backup_key_vault_key_key].id, null) # Use geo_backup_key_vault_key_key to get id of keyvault key
-      geo_backup_user_assigned_identity_id = try(var.remote_objects.managed_identities[var.settings.customer_managed_key.geo_backup_user_assigned_identity_key].id, null) # Use geo_backup_user_assigned_identity_key to get id of managed identity
+      key_vault_key_id                     = var.remote_objects.keyvault_keys[var.client_config.landingzone_key][var.settings.customer_managed_key.key_vault_key_key].id # Use key_vault_key_key to get id of the keyvault key
+      primary_user_assigned_identity_id    = try(var.remote_objects.managed_identities[var.client_config.landingzone_key][var.settings.customer_managed_key.primary_user_assigned_identity_key].id, null) # Use primary_user_assigned_identity_key to get id of managed identity
+      geo_backup_key_vault_key_id          = try(var.remote_objects.keyvault_keys[var.client_config.landingzone_key][var.settings.customer_managed_key.geo_backup_key_vault_key_key].id, null) # Use geo_backup_key_vault_key_key to get id of keyvault key
+      geo_backup_user_assigned_identity_id = try(var.remote_objects.managed_identities[var.client_config.landingzone_key][var.settings.customer_managed_key.geo_backup_user_assigned_identity_key].id, null) # Use geo_backup_user_assigned_identity_key to get id of managed identity
     }
   }
 
