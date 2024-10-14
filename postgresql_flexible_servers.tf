@@ -25,5 +25,6 @@ module "postgresql_flexible_servers" {
     azuread_users       = local.combined_objects_azuread_users
     service_principals  = local.combined_objects_azuread_service_principals
     managed_identities  = local.combined_objects_managed_identities
+    keyvault_keys       = local.combined_objects_keyvault_keys
   }
 }
