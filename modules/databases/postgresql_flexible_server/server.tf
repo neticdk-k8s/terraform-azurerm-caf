@@ -71,9 +71,9 @@ resource "azurerm_postgresql_flexible_server" "postgresql" {
     for_each = try(var.settings.customer_managed_key, null) == null ? [] : [var.settings.customer_managed_key] 
 
     content {
-      key_vault_key_id = try(var.settings.customer_managed_key.key_vault_key_id, null)
-      primary_user_assigned_identity_id = try(var.settings.customer_managed_key.primary_user_assigned_identity_id, null)
-      geo_backup_key_vault_key_id = try(var.settings.customer_managed_key.geo_backup_key_vault_key_id, null)
+      key_vault_key_id                     = var.settings.customer_managed_key.key_vault_key_id
+      primary_user_assigned_identity_id    = try(var.settings.customer_managed_key.primary_user_assigned_identity_id, null)
+      geo_backup_key_vault_key_id          = try(var.settings.customer_managed_key.geo_backup_key_vault_key_id, null)
       geo_backup_user_assigned_identity_id = try(var.settings.customer_managed_key.geo_backup_user_assigned_identity_id, null)
     }
   }
