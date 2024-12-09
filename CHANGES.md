@@ -1,6 +1,15 @@
 # This file is to see deviants done by Netic
 
 ## Added support for customer_managed_key for postgresql_flexible_server
+- Date: 09/12/2024
+- File(s): modules/databases/postgresql_flexible_server/server.tf
+- Who: MFR
+- PR: https://github.com/neticdk-k8s/terraform-azurerm-caf/pull/14/files
+
+### Reason:
+Add option to disable public endpoint for Postgres Flexible Server.
+
+## Added support for customer_managed_key for postgresql_flexible_server
 - Date: 14/10/2024
 - File(s): modules/databases/postgresql_flexible_server/server.tf
 - Who: MFR
