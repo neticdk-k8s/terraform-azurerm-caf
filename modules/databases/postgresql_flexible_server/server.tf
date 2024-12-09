@@ -9,14 +9,15 @@ resource "azurecaf_name" "postgresql_flexible_server" {
 }
 
 resource "azurerm_postgresql_flexible_server" "postgresql" {
-  name                = azurecaf_name.postgresql_flexible_server.result
-  resource_group_name = local.resource_group_name
-  location            = local.location
-  version             = try(var.settings.version, null)
-  sku_name            = try(var.settings.sku_name, null)
-  zone                = try(var.settings.zone, null)
-  storage_mb          = try(var.settings.storage_mb, null)
-  auto_grow_enabled   = try(var.settings.auto_grow_enabled, null)
+  name                          = azurecaf_name.postgresql_flexible_server.result
+  resource_group_name           = local.resource_group_name
+  location                      = local.location
+  version                       = try(var.settings.version, null)
+  sku_name                      = try(var.settings.sku_name, null)
+  zone                          = try(var.settings.zone, null)
+  storage_mb                    = try(var.settings.storage_mb, null)
+  auto_grow_enabled             = try(var.settings.auto_grow_enabled, null)
+  public_network_access_enabled = try(var.settings.public_network_access_enabled, true)
 
   delegated_subnet_id = var.remote_objects.subnet_id
   private_dns_zone_id = var.remote_objects.private_dns_zone_id
