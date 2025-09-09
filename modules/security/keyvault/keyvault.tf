@@ -59,7 +59,7 @@ resource "azurerm_key_vault" "keyvault" {
 
   lifecycle {
     ignore_changes = [
-      resource_group_name, location
+      resource_group_name, location, tags
     ]
   }
 }
