@@ -22,6 +22,7 @@ resource "azurerm_network_security_group" "nsg_obj" {
   resource_group_name = var.resource_group
   location            = var.location
   tags                = local.tags
+  lifecycle {ignore_changes = [tags]}
 
   security_rule = can(var.network_security_group_definition[each.value.nsg_key].nsg) == false ? [] : [
     for value in var.network_security_group_definition[each.value.nsg_key].nsg : {

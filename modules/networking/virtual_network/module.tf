@@ -36,7 +36,7 @@ resource "azurerm_virtual_network" "vnet" {
   }
 
   lifecycle {
-    ignore_changes = [name]
+    ignore_changes = [name, tags]
   }
 }
 

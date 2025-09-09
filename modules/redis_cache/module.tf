@@ -19,6 +19,7 @@ resource "azurerm_redis_cache" "redis" {
   family              = var.redis.family
   sku_name            = var.redis.sku_name
   tags                = merge(local.tags, try(var.tags, null))
+  lifecycle {ignore_changes = [tags]}
 
   enable_non_ssl_port           = lookup(var.redis, "enable_non_ssl_port", null)
   minimum_tls_version           = lookup(var.redis, "minimum_tls_version", "1.2")

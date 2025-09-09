@@ -251,7 +251,7 @@ resource "azurerm_storage_account" "stg" {
 
   lifecycle {
     ignore_changes = [
-      location, resource_group_name, customer_managed_key
+      location, resource_group_name, customer_managed_key, tags
     ]
   }
 }
