@@ -33,6 +33,7 @@ resource "azurerm_key_vault" "keyvault" {
     delete = "60m"
 
   }
+  lifecycle {ignore_changes = [tags]}
 
   dynamic "network_acls" {
     for_each = lookup(var.settings, "network", null) == null ? [] : [1]
