@@ -23,6 +23,7 @@ resource "azurerm_firewall" "fw" {
   tags                = local.tags
   threat_intel_mode   = try(var.settings.threat_intel_mode, null)
   zones               = try(var.settings.zones, null)
+  lifecycle {ignore_changes = [tags]}
 
   ## direct subnet_id reference
   dynamic "ip_configuration" {

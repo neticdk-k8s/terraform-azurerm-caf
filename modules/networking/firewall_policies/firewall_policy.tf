@@ -22,6 +22,8 @@ resource "azurerm_firewall_policy" "fwpol" {
   threat_intelligence_mode = try(var.settings.threat_intelligence_mode, "Alert")
   tags                     = local.tags
 
+  lifecycle {ignore_changes = [tags]}
+
   dynamic "dns" {
     for_each = try(var.settings.dns, null) == null ? [] : [1]
 

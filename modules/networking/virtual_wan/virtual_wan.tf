@@ -14,6 +14,7 @@ resource "azurerm_virtual_wan" "vwan" {
   resource_group_name = var.resource_group_name
   location            = var.location
   tags                = local.tags
+  lifecycle {ignore_changes = [tags]}
 
   type                              = try(var.settings.type, "Standard")
   disable_vpn_encryption            = try(var.settings.disable_vpn_encryption, false)

@@ -20,6 +20,8 @@ resource "azurerm_virtual_hub" "vwan_hub" {
   hub_routing_preference                 = try(var.virtual_hub_config.hub_routing_preference, null)
   virtual_router_auto_scale_min_capacity = try(var.virtual_hub_config.virtual_router_auto_scale_min_capacity, null)
   tags                                   = local.tags
+  lifecycle {ignore_changes = [tags]}
+
 
   dynamic "route" {
     for_each = try(var.virtual_hub_config.routes, {})
