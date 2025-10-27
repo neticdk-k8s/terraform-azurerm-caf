@@ -6,7 +6,6 @@ resource "azurecaf_name" "polgroup" {
   clean_input   = true
   passthrough   = var.global_settings.passthrough
   use_slug      = var.global_settings.use_slug
-  lifecycle {ignore_changes = [tags]}
 }
 
 resource "azurecaf_name" "application_rule" {
