@@ -90,4 +90,10 @@ resource "azurerm_vpn_gateway_connection" "vpn_gateway_connection" {
       }
     }
   }
+  lifecycle {
+    ignore_changes = [
+      vpn_link[0].shared_key,
+      vpn_link[1].shared_key, # vWAN Gateways are always dual-instance (active-active)
+    ]
+  }
 }
