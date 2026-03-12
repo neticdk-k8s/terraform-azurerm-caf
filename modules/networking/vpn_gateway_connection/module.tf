@@ -94,6 +94,13 @@ resource "azurerm_vpn_gateway_connection" "vpn_gateway_connection" {
     ignore_changes = [
       vpn_link[0].shared_key,
       vpn_link[1].shared_key, # vWAN Gateways are always dual-instance (active-active)
+      remote_vpn_site_id,
+      vpn_link[0].ingress_nat_rule_ids,
+      vpn_link[1].ingress_nat_rule_ids,
+      vpn_link[0].egress_nat_rule_ids,
+      vpn_link[1].egress_nat_rule_ids,
+      vpn_link[0].vpn_site_link_id,
+      vpn_link[1].vpn_site_link_id
     ]
   }
 }
