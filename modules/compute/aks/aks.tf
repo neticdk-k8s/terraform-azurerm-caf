@@ -68,7 +68,6 @@ resource "azurerm_kubernetes_cluster" "aks" {
     ultra_ssd_enabled             = try(var.settings.default_node_pool.ultra_ssd_enabled, false)
     vm_size                       = var.settings.default_node_pool.vm_size
     capacity_reservation_group_id = try(var.settings.capacity_reservation_group_id, null)
-    custom_ca_trust_enabled       = try(var.settings.custom_ca_trust_enabled, null)
     host_group_id                 = try(var.settings.host_group_id, null)
 
     pod_subnet_id  = can(var.settings.default_node_pool.pod_subnet_key) == false || can(var.settings.default_node_pool.pod_subnet.key) == false || can(var.settings.default_node_pool.pod_subnet_id) || can(var.settings.default_node_pool.pod_subnet.resource_id) ? try(var.settings.default_node_pool.pod_subnet_id, var.settings.default_node_pool.pod_subnet.resource_id, null) : var.vnets[try(var.settings.lz_key, var.client_config.landingzone_key)][var.settings.vnet_key].subnets[try(var.settings.default_node_pool.pod_subnet_key, var.settings.default_node_pool.pod_subnet.key)].id
@@ -455,12 +454,7 @@ resource "azurerm_kubernetes_cluster_node_pool" "nodepools" {
   kubernetes_cluster_id         = azurerm_kubernetes_cluster.aks.id
   vm_size                       = each.value.vm_size
   capacity_reservation_group_id = try(each.value.capacity_reservation_group_id, null)
-  custom_ca_trust_enabled       = try(each.value.custom_ca_trust_enabled, null)
   zones                         = try(each.value.zones, each.value.availability_zones, null)
-  enable_auto_scaling           = try(each.value.enable_auto_scaling, false)
-  enable_host_encryption        = try(each.value.enable_host_encryption, false)
-  enable_node_public_ip         = try(each.value.enable_node_public_ip, false)
-  eviction_policy               = try(each.value.eviction_policy, null)
   host_group_id                 = try(each.value.host_group_id, null)
 
   dynamic "kubelet_config" {
@@ -521,10 +515,9 @@ resource "azurerm_kubernetes_cluster_node_pool" "nodepools" {
     }
   }
 
-  fips_enabled       = try(each.value.fips_enabled, false)
-  kubelet_disk_type  = try(each.value.kubelet_disk_type, null)
-  max_pods           = try(each.value.max_pods, null)
-  message_of_the_day = try(each.value.message_of_the_day, null)
+  fips_enabled      = try(each.value.fips_enabled, false)
+  kubelet_disk_type = try(each.value.kubelet_disk_type, null)
+  max_pods          = try(each.value.max_pods, null)
 
   dynamic "node_network_profile" {
     for_each = try(var.settings.node_network_profile[*], {})
