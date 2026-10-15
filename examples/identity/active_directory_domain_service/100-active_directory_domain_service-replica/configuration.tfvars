@@ -23,7 +23,7 @@ resource_groups = {
 azuread_service_principals = {
   aadds = {
     azuread_application = {
-      application_id = "2565bd9d-da50-47d4-8b85-4c97f669dc36"
+      client_id = "2565bd9d-da50-47d4-8b85-4c97f669dc36"
     }
   }
 }

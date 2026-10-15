@@ -6,7 +6,7 @@ resource "azurerm_key_vault_secret" "client_id" {
   key_vault_id = try(each.value.lz_key, null) == null ? var.keyvaults[var.client_config.landingzone_key][each.key].id : var.keyvaults[each.value.lz_key][each.key].id
 
   value = coalesce(
-    try(var.resources.application.application_id, null)
+    try(var.resources.application.client_id, null)
   )
 }
 
