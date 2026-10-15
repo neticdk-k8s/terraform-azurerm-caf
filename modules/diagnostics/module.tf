@@ -33,30 +33,16 @@ resource "azurerm_monitor_diagnostic_setting" "diagnostics" {
     }
     content {
       category = enabled_log.value[0]
-
-      dynamic "retention_policy" {
-        for_each = length(enabled_log.value) > 2 ? [1] : []
-        content {
-          enabled = enabled_log.value[2]
-          days    = enabled_log.value[3]
-        }
-      }
     }
   }
 
-  dynamic "metric" {
-    for_each = lookup(var.diagnostics.diagnostics_definition[each.value.definition_key].categories, "metric", {})
+  dynamic "enabled_metric" {
+    for_each = {
+      for key, value in lookup(var.diagnostics.diagnostics_definition[each.value.definition_key].categories, "metric", {}) : key => value
+      if tobool(value[1]) == true
+    }
     content {
-      category = metric.value[0]
-      enabled  = metric.value[1]
-
-      dynamic "retention_policy" {
-        for_each = length(metric.value) > 2 ? [1] : []
-        content {
-          enabled = metric.value[2]
-          days    = metric.value[3]
-        }
-      }
+      category = enabled_metric.value[0]
     }
   }
 }

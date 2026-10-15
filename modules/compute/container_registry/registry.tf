@@ -18,37 +18,25 @@ resource "azurerm_container_registry" "acr" {
 
   public_network_access_enabled = var.public_network_access_enabled
 
-  dynamic "network_rule_set" {
-    for_each = try(var.network_rule_set, {})
-
-    content {
-      default_action = try(network_rule_set.value.default_action, "Allow")
-
-      dynamic "ip_rule" {
-        for_each = try(network_rule_set.value.ip_rules, {})
-
-        content {
+  network_rule_set = length(try(var.network_rule_set, {})) == 0 ? null : [
+    for k, rule_set in var.network_rule_set : {
+      default_action = try(rule_set.default_action, "Allow")
+      ip_rule = [
+        for ip_rule in values(try(rule_set.ip_rules, {})) : {
           action   = "Allow"
-          ip_range = ip_rule.value.ip_range
+          ip_range = ip_rule.ip_range
         }
-      }
-      dynamic "virtual_network" {
-        for_each = try(network_rule_set.value.virtual_networks, {})
-
-        content {
-          action    = "Allow"
-          subnet_id = can(virtual_network.value.subnet_id) ? virtual_network.value.subnet_id : var.vnets[try(virtual_network.value.lz_key, var.client_config.landingzone_key)][virtual_network.value.vnet_key].subnets[virtual_network.value.subnet_key].id
-        }
-      }
+      ]
     }
-  }
+  ]
 
   dynamic "georeplications" {
     for_each = try(var.georeplications, {})
 
     content {
-      location = var.global_settings.regions[georeplications.key]
-      tags     = try(georeplications.value.tags)
+      location                        = var.global_settings.regions[georeplications.key]
+      tags                            = try(georeplications.value.tags)
+      global_endpoint_routing_enabled = try(georeplications.value.global_endpoint_routing_enabled, true)
     }
   }
 }

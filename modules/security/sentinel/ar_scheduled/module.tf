@@ -23,11 +23,11 @@ resource "azurerm_sentinel_alert_rule_scheduled" "scheduled" {
     }
   }
 
-  dynamic "incident_configuration" {
+  dynamic "incident" {
     for_each = lookup(var.settings, "incident_configuration", {}) != {} ? [1] : []
 
     content {
-      create_incident = lookup(var.settings.incident_configuration, "create_incident", null)
+      create_incident_enabled = try(var.settings.incident_configuration.create_incident_enabled, var.settings.incident_configuration.create_incident, true)
 
       dynamic "grouping" {
         for_each = lookup(var.settings.incident_configuration, "grouping", {}) != {} ? [1] : []
@@ -37,9 +37,9 @@ resource "azurerm_sentinel_alert_rule_scheduled" "scheduled" {
           lookback_duration       = lookup(var.settings.incident_configuration.grouping, "lookback_duration", "PT5M")
           reopen_closed_incidents = lookup(var.settings.incident_configuration.grouping, "reopen_closed_incidents", false)
           entity_matching_method  = lookup(var.settings.incident_configuration.grouping, "entity_matching_method", null)
-          group_by_entities       = lookup(var.settings.incident_configuration.grouping, "group_by_entities", null)
-          group_by_alert_details  = lookup(var.settings.incident_configuration.grouping, "group_by_alert_details", null)
-          group_by_custom_details = lookup(var.settings.incident_configuration.grouping, "group_by_custom_details", null)
+          by_entities             = lookup(var.settings.incident_configuration.grouping, "group_by_entities", null)
+          by_alert_details        = lookup(var.settings.incident_configuration.grouping, "group_by_alert_details", null)
+          by_custom_details       = lookup(var.settings.incident_configuration.grouping, "group_by_custom_details", null)
         }
       }
     }

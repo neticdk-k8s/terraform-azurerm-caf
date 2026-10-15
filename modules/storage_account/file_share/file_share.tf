@@ -2,11 +2,11 @@
 # Ref : https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/storage_share
 
 resource "azurerm_storage_share" "fs" {
-  name                 = var.settings.name
-  storage_account_name = var.storage_account_name
-  quota                = try(var.settings.quota, null)
-  metadata             = try(var.settings.metadata, null)
-  enabled_protocol     = try(var.settings.enabled_protocol, null)
+  name               = var.settings.name
+  storage_account_id = var.storage_account_id
+  quota              = try(var.settings.quota, null)
+  metadata           = try(var.settings.metadata, null)
+  enabled_protocol   = try(var.settings.enabled_protocol, null)
 
   dynamic "acl" {
     for_each = try(var.settings.acl, null) != null ? [var.settings.acl] : []

@@ -23,11 +23,6 @@ variable "location" {
 variable "resource_group_name" {
   description = "(Required) Resource group of the Logic App"
 }
-variable "integration_service_environment_id" {
-  description = "(Optional) integration_service_environment_id"
-  type        = string
-  default     = null
-}
 variable "logic_app_integration_account_id" {
   description = "(Optional) logic_app_integration_account_id"
   type        = string

@@ -81,7 +81,6 @@ locals {
     bastion_hosts                       = try(var.compute.bastion_hosts, {})
     batch_accounts                      = try(var.compute.batch_accounts, {})
     batch_applications                  = try(var.compute.batch_applications, {})
-    batch_certificates                  = try(var.compute.batch_certificates, {})
     batch_jobs                          = try(var.compute.batch_jobs, {})
     batch_pools                         = try(var.compute.batch_pools, {})
     container_groups                    = try(var.compute.container_groups, {})
@@ -118,8 +117,6 @@ locals {
     database_migration_projects        = try(var.database.database_migration_projects, {})
     databricks_workspaces              = try(var.database.databricks_workspaces, {})
     machine_learning_workspaces        = try(var.database.machine_learning_workspaces, {})
-    mariadb_databases                  = try(var.database.mariadb_databases, {})
-    mariadb_servers                    = try(var.database.mariadb_servers, {})
     mssql_databases                    = try(var.database.mssql_databases, {})
     mssql_elastic_pools                = try(var.database.mssql_elastic_pools, {})
     mssql_failover_groups              = try(var.database.mssql_failover_groups, {})
@@ -133,10 +130,7 @@ locals {
     mssql_mi_secondary_tdes            = try(var.database.mssql_mi_secondary_tdes, {})
     mssql_mi_tdes                      = try(var.database.mssql_mi_tdes, {})
     mssql_servers                      = try(var.database.mssql_servers, {})
-    mysql_databases                    = try(var.database.mysql_databases, {})
-    mysql_servers                      = try(var.database.mysql_servers, {})
     postgresql_flexible_servers        = try(var.database.postgresql_flexible_servers, {})
-    postgresql_servers                 = try(var.database.postgresql_servers, {})
     synapse_workspaces                 = try(var.database.synapse_workspaces, {})
     mysql_flexible_server              = try(var.database.mysql_flexible_server, {})
 
@@ -227,15 +221,14 @@ locals {
   }, var.global_settings)
 
   logic_app = {
-    integration_service_environment = try(var.logic_app.integration_service_environment, {})
-    logic_app_action_custom         = try(var.logic_app.logic_app_action_custom, {})
-    logic_app_action_http           = try(var.logic_app.logic_app_action_http, {})
-    logic_app_integration_account   = try(var.logic_app.logic_app_integration_account, {})
-    logic_app_trigger_custom        = try(var.logic_app.logic_app_trigger_custom, {})
-    logic_app_trigger_http_request  = try(var.logic_app.logic_app_trigger_http_request, {})
-    logic_app_trigger_recurrence    = try(var.logic_app.logic_app_trigger_recurrence, {})
-    logic_app_workflow              = try(var.logic_app.logic_app_workflow, {})
-    logic_app_standard              = try(var.logic_app.logic_app_standard, {})
+    logic_app_action_custom        = try(var.logic_app.logic_app_action_custom, {})
+    logic_app_action_http          = try(var.logic_app.logic_app_action_http, {})
+    logic_app_integration_account  = try(var.logic_app.logic_app_integration_account, {})
+    logic_app_trigger_custom       = try(var.logic_app.logic_app_trigger_custom, {})
+    logic_app_trigger_http_request = try(var.logic_app.logic_app_trigger_http_request, {})
+    logic_app_trigger_recurrence   = try(var.logic_app.logic_app_trigger_recurrence, {})
+    logic_app_workflow             = try(var.logic_app.logic_app_workflow, {})
+    logic_app_standard             = try(var.logic_app.logic_app_standard, {})
   }
 
   cognitive_services = {
@@ -393,14 +386,11 @@ locals {
   }
 
   webapp = {
-    app_service_environments                       = try(var.webapp.app_service_environments, {})
     app_service_environments_v3                    = try(var.webapp.app_service_environments_v3, {})
     app_service_plans                              = try(var.webapp.app_service_plans, {})
-    app_services                                   = try(var.webapp.app_services, {})
     azurerm_application_insights                   = try(var.webapp.azurerm_application_insights, {})
     azurerm_application_insights_web_test          = try(var.webapp.azurerm_application_insights_web_test, {})
     azurerm_application_insights_standard_web_test = try(var.webapp.azurerm_application_insights_standard_web_test, {})
-    function_apps                                  = try(var.webapp.function_apps, {})
     static_sites                                   = try(var.webapp.static_sites, {})
   }
 
