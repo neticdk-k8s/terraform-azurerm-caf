@@ -518,6 +518,8 @@ resource "azurerm_kubernetes_cluster_node_pool" "nodepools" {
   kubelet_disk_type = try(each.value.kubelet_disk_type, null)
   max_pods          = try(each.value.max_pods, null)
 
+  temporary_name_for_rotation = try(each.value.temporary_name_for_rotation, null)
+
   dynamic "node_network_profile" {
     for_each = try(var.settings.node_network_profile[*], {})
 
