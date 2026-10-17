@@ -45,9 +45,9 @@ resource "azurerm_kubernetes_cluster" "aks" {
 
   default_node_pool {
     zones                         = try(var.settings.default_node_pool.zones, var.settings.default_node_pool.availability_zones, null)
-    enable_auto_scaling           = try(var.settings.default_node_pool.enable_auto_scaling, false)
-    enable_host_encryption        = try(var.settings.default_node_pool.enable_host_encryption, false)
-    enable_node_public_ip         = try(var.settings.default_node_pool.enable_node_public_ip, false)
+    auto_scaling_enabled          = try(var.settings.default_node_pool.auto_scaling_enabled, var.settings.default_node_pool.enable_auto_scaling, false)
+    host_encryption_enabled       = try(var.settings.default_node_pool.host_encryption_enabled, var.settings.default_node_pool.enable_host_encryption, false)
+    node_public_ip_enabled        = try(var.settings.default_node_pool.node_public_ip_enabled, var.settings.default_node_pool.enable_node_public_ip, false)
     fips_enabled                  = try(var.settings.default_node_pool.fips_enabled, null)
     kubelet_disk_type             = try(var.settings.default_node_pool.kubelet_disk_type, null)
     max_count                     = try(var.settings.default_node_pool.max_count, null)
@@ -68,16 +68,17 @@ resource "azurerm_kubernetes_cluster" "aks" {
     ultra_ssd_enabled             = try(var.settings.default_node_pool.ultra_ssd_enabled, false)
     vm_size                       = var.settings.default_node_pool.vm_size
     capacity_reservation_group_id = try(var.settings.capacity_reservation_group_id, null)
-    custom_ca_trust_enabled       = try(var.settings.custom_ca_trust_enabled, null)
     host_group_id                 = try(var.settings.host_group_id, null)
 
     pod_subnet_id  = can(var.settings.default_node_pool.pod_subnet_key) == false || can(var.settings.default_node_pool.pod_subnet.key) == false || can(var.settings.default_node_pool.pod_subnet_id) || can(var.settings.default_node_pool.pod_subnet.resource_id) ? try(var.settings.default_node_pool.pod_subnet_id, var.settings.default_node_pool.pod_subnet.resource_id, null) : var.vnets[try(var.settings.lz_key, var.client_config.landingzone_key)][var.settings.vnet_key].subnets[try(var.settings.default_node_pool.pod_subnet_key, var.settings.default_node_pool.pod_subnet.key)].id
     vnet_subnet_id = can(var.settings.default_node_pool.vnet_subnet_id) || can(var.settings.default_node_pool.subnet.resource_id) ? try(var.settings.default_node_pool.vnet_subnet_id, var.settings.default_node_pool.subnet.resource_id) : var.vnets[try(var.settings.vnet.lz_key, var.settings.lz_key, var.client_config.landingzone_key)][try(var.settings.vnet.key, var.settings.vnet_key)].subnets[try(var.settings.default_node_pool.subnet_key, var.settings.default_node_pool.subnet.key)].id
 
     dynamic "upgrade_settings" {
-      for_each = try(var.settings.default_node_pool.upgrade_settings, null) == null ? [] : [1]
+      for_each = try(var.settings.default_node_pool.upgrade_settings, null) == null ? [] : [var.settings.default_node_pool.upgrade_settings]
       content {
-        max_surge = upgrade_settings.value.max_surge
+        max_surge                     = upgrade_settings.value.max_surge
+        drain_timeout_in_minutes      = try(upgrade_settings.value.drain_timeout_in_minutes, null)
+        node_soak_duration_in_minutes = try(upgrade_settings.value.node_soak_duration_in_minutes, null)
       }
     }
 
@@ -85,7 +86,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
       for_each = try(var.settings.default_node_pool.kubelet_config, null) == null ? [] : [1]
       content {
         allowed_unsafe_sysctls    = try(kubelet_config.value.allowed_unsafe_sysctls, null)
-        container_log_max_line    = try(kubelet_config.value.container_log_max_line, null)
+        container_log_max_files   = try(kubelet_config.value.container_log_max_files, kubelet_config.value.container_log_max_line, null)
         container_log_max_size_mb = try(kubelet_config.value.container_log_max_size_mb, null)
         cpu_cfs_quota_enabled     = try(kubelet_config.value.cpu_cfs_quota_enabled, null)
         cpu_cfs_quota_period      = try(kubelet_config.value.cpu_cfs_quota_period, null)
@@ -134,15 +135,20 @@ resource "azurerm_kubernetes_cluster" "aks" {
             vm_vfs_cache_pressure              = try(sysctl_config.value.vm_vfs_cache_pressure, null)
           }
         }
-        transparent_huge_page_defrag  = try(linux_os_config.value.transparent_huge_page_defrag, null)
-        transparent_huge_page_enabled = try(linux_os_config.value.transparent_huge_page_enabled, null)
+        transparent_huge_page_defrag = try(linux_os_config.value.transparent_huge_page_defrag, null)
+        transparent_huge_page        = try(linux_os_config.value.transparent_huge_page, linux_os_config.value.transparent_huge_page_enabled, null)
       }
     }
   }
 
+  node_provisioning_profile {
+    mode               = try(var.settings.node_provisioning_profile.mode, "Manual")
+    default_node_pools = try(var.settings.node_provisioning_profile.default_node_pools, null)
+  }
+
   dns_prefix                 = try(var.settings.dns_prefix, try(var.settings.dns_prefix_private_cluster, random_string.prefix.result))
   dns_prefix_private_cluster = try(var.settings.dns_prefix_private_cluster, null)
-  automatic_channel_upgrade  = try(var.settings.automatic_channel_upgrade, null)
+  automatic_upgrade_channel  = try(var.settings.automatic_upgrade_channel, var.settings.automatic_channel_upgrade, null)
 
   dynamic "key_management_service" {
     for_each = try(var.settings.key_management_service[*], {})
@@ -208,20 +214,18 @@ resource "azurerm_kubernetes_cluster" "aks" {
   #       }
   #     }
 
-  api_server_authorized_ip_ranges = try(var.settings.api_server_authorized_ip_ranges, null)
-
   disk_encryption_set_id = try(coalesce(
     try(var.settings.disk_encryption_set_id, ""),
     try(var.settings.disk_encryption_set.id, "")
   ), null)
 
   dynamic "api_server_access_profile" {
-    for_each = try(var.settings.api_server_access_profile[*], {})
+    for_each = try(var.settings.api_server_access_profile[*], can(var.settings.api_server_authorized_ip_ranges) ? [{ authorized_ip_ranges = var.settings.api_server_authorized_ip_ranges }] : [])
 
     content {
-      authorized_ip_ranges     = try(api_server_access_profile.value.authorized_ip_ranges, null)
-      subnet_id                = try(can(api_server_access_profile.value.subnet_id) ? api_server_access_profile.value.subnet_id : var.vnets[try(api_server_access_profile.value.subnet.lz_key, var.settings.vnet.lz_key, var.settings.lz_key, var.client_config.landingzone_key)][try(api_server_access_profile.value.subnet.vnet_key, var.settings.vnet_key)].subnets[try(api_server_access_profile.value.subnet.key, var.settings.subnet_key)].id, null)
-      vnet_integration_enabled = try(api_server_access_profile.value.vnet_integration_enabled, false)
+      authorized_ip_ranges                = try(api_server_access_profile.value.authorized_ip_ranges, null)
+      subnet_id                           = try(can(api_server_access_profile.value.subnet_id) ? api_server_access_profile.value.subnet_id : var.vnets[try(api_server_access_profile.value.subnet.lz_key, var.settings.vnet.lz_key, var.settings.lz_key, var.client_config.landingzone_key)][try(api_server_access_profile.value.subnet.vnet_key, var.settings.vnet_key)].subnets[try(api_server_access_profile.value.subnet.key, var.settings.subnet_key)].id, null)
+      virtual_network_integration_enabled = try(api_server_access_profile.value.virtual_network_integration_enabled, api_server_access_profile.value.vnet_integration_enabled, false)
     }
   }
 
@@ -289,7 +293,6 @@ resource "azurerm_kubernetes_cluster" "aks" {
     content {
       blob_driver_enabled         = try(storage_profile.value.blob_driver_enabled, null)
       disk_driver_enabled         = try(storage_profile.value.disk_driver_enabled, null)
-      disk_driver_version         = try(storage_profile.value.disk_driver_version, null)
       file_driver_enabled         = try(storage_profile.value.file_driver_enabled, null)
       snapshot_controller_enabled = try(storage_profile.value.snapshot_controller_enabled, null)
     }
@@ -324,13 +327,12 @@ resource "azurerm_kubernetes_cluster" "aks" {
       network_mode        = try(network_profile.value.network_mode, null)
       network_policy      = try(network_profile.value.network_policy, null)
       dns_service_ip      = try(network_profile.value.dns_service_ip, null)
-      docker_bridge_cidr  = try(network_profile.value.docker_bridge_cidr, null)
       outbound_type       = try(network_profile.value.outbound_type, null)
       pod_cidr            = try(network_profile.value.pod_cidr, null)
       service_cidr        = try(network_profile.value.service_cidr, null)
       service_cidrs       = try(network_profile.value.network_cidrs, null)
       load_balancer_sku   = try(network_profile.value.load_balancer_sku, null)
-      ebpf_data_plane     = try(network_profile.value.ebpf_data_plane, null)
+      network_data_plane  = try(network_profile.value.network_data_plane, network_profile.value.ebpf_data_plane, null)
       network_plugin_mode = try(network_profile.value.network_plugin_mode, null)
       ip_versions         = try(network_profile.value.ip_versions, null)
 
@@ -353,22 +355,16 @@ resource "azurerm_kubernetes_cluster" "aks" {
   private_cluster_enabled             = try(var.settings.private_cluster_enabled, null)
   private_dns_zone_id                 = try(var.private_dns_zone_id, null)
   private_cluster_public_fqdn_enabled = try(var.settings.private_cluster_public_fqdn_enabled, null)
-  public_network_access_enabled       = try(var.settings.public_network_access_enabled, true)
 
   #Enabled RBAC
   dynamic "azure_active_directory_role_based_access_control" {
     for_each = try(var.settings.role_based_access_control[*], {})
 
     content {
-      managed   = try(azure_active_directory_role_based_access_control.value.azure_active_directory.managed, true)
       tenant_id = try(azure_active_directory_role_based_access_control.value.azure_active_directory.tenant_id, null)
 
       azure_rbac_enabled     = try(azure_active_directory_role_based_access_control.value.enabled, true)
       admin_group_object_ids = try(azure_active_directory_role_based_access_control.value.azure_active_directory.admin_group_object_ids, try(var.admin_group_object_ids, null))
-
-      client_app_id     = try(azure_active_directory_role_based_access_control.value.azure_active_directory.client_app_id, null)
-      server_app_id     = try(azure_active_directory_role_based_access_control.value.azure_active_directory.server_app_id, null)
-      server_app_secret = try(azure_active_directory_role_based_access_control.value.azure_active_directory.server_app_secret, null)
 
     }
   }
@@ -430,7 +426,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
     for_each = try(var.settings.web_app_routing[*], {})
 
     content {
-      dns_zone_id = try(web_app_routing.value.dns_zone_id, null)
+      dns_zone_ids = try(web_app_routing.value.dns_zone_ids, [web_app_routing.value.dns_zone_id])
     }
   }
 }
@@ -453,11 +449,10 @@ resource "azurerm_kubernetes_cluster_node_pool" "nodepools" {
   kubernetes_cluster_id         = azurerm_kubernetes_cluster.aks.id
   vm_size                       = each.value.vm_size
   capacity_reservation_group_id = try(each.value.capacity_reservation_group_id, null)
-  custom_ca_trust_enabled       = try(each.value.custom_ca_trust_enabled, null)
   zones                         = try(each.value.zones, each.value.availability_zones, null)
-  enable_auto_scaling           = try(each.value.enable_auto_scaling, false)
-  enable_host_encryption        = try(each.value.enable_host_encryption, false)
-  enable_node_public_ip         = try(each.value.enable_node_public_ip, false)
+  auto_scaling_enabled          = try(each.value.auto_scaling_enabled, each.value.enable_auto_scaling, false)
+  host_encryption_enabled       = try(each.value.host_encryption_enabled, each.value.enable_host_encryption, false)
+  node_public_ip_enabled        = try(each.value.node_public_ip_enabled, each.value.enable_node_public_ip, false)
   eviction_policy               = try(each.value.eviction_policy, null)
   host_group_id                 = try(each.value.host_group_id, null)
 
@@ -465,7 +460,7 @@ resource "azurerm_kubernetes_cluster_node_pool" "nodepools" {
     for_each = try(each.value.kubelet_config, null) == null ? [] : [1]
     content {
       allowed_unsafe_sysctls    = try(kubelet_config.value.allowed_unsafe_sysctls, null)
-      container_log_max_line    = try(kubelet_config.value.container_log_max_line, null)
+      container_log_max_files   = try(kubelet_config.value.container_log_max_files, kubelet_config.value.container_log_max_line, null)
       container_log_max_size_mb = try(kubelet_config.value.container_log_max_size_mb, null)
       cpu_cfs_quota_enabled     = try(kubelet_config.value.cpu_cfs_quota_enabled, null)
       cpu_cfs_quota_period      = try(kubelet_config.value.cpu_cfs_quota_period, null)
@@ -514,15 +509,16 @@ resource "azurerm_kubernetes_cluster_node_pool" "nodepools" {
           vm_vfs_cache_pressure              = try(sysctl_config.value.vm_vfs_cache_pressure, null)
         }
       }
-      transparent_huge_page_defrag  = try(linux_os_config.value.transparent_huge_page_defrag, null)
-      transparent_huge_page_enabled = try(linux_os_config.value.transparent_huge_page_enabled, null)
+      transparent_huge_page_defrag = try(linux_os_config.value.transparent_huge_page_defrag, null)
+      transparent_huge_page        = try(linux_os_config.value.transparent_huge_page, linux_os_config.value.transparent_huge_page_enabled, null)
     }
   }
 
-  fips_enabled       = try(each.value.fips_enabled, false)
-  kubelet_disk_type  = try(each.value.kubelet_disk_type, null)
-  max_pods           = try(each.value.max_pods, null)
-  message_of_the_day = try(each.value.message_of_the_day, null)
+  fips_enabled      = try(each.value.fips_enabled, false)
+  kubelet_disk_type = try(each.value.kubelet_disk_type, null)
+  max_pods          = try(each.value.max_pods, null)
+
+  temporary_name_for_rotation = try(each.value.temporary_name_for_rotation, null)
 
   dynamic "node_network_profile" {
     for_each = try(var.settings.node_network_profile[*], {})

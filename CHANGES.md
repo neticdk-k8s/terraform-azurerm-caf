@@ -1,5 +1,35 @@
 # This file is to see deviants done by Netic
 
+## Raise providers to azurerm >= 5.9, azuread >= 3.10, azapi >= 2.13
+- Date: 15/10/2026
+- File(s): main.tf and a large number of files under modules/ (see git history of this change)
+- Who: CRL
+- Validated with: `terraform validate` against azurerm 5.9.0, azuread 3.10, azapi 2.13 (no errors)
+
+### Reason:
+The provider constraints were raised to the latest major versions. The module was written for azurerm 3.68 and therefore had to be migrated to the azurerm 4.x / 5.x schema.
+
+### What changed:
+- Renamed arguments to their new names, keeping the old setting names as fallbacks where possible (`enable_*` -> `*_enabled`, `*_disabled` -> `*_enabled`, `storage_account_name` -> `storage_account_id`, `zone_name`/`resource_group_name` -> `private_dns_zone_id`, `application_object_id` -> `application_id`, ...).
+- Storage account: `queue_properties` and `static_website` are now the separate resources `azurerm_storage_account_queue_properties` and `azurerm_storage_account_static_website`. Containers, queues, blobs, file shares and directories use the ARM id / url of their parent.
+- Customer managed keys on storage accounts use `key_vault_key_id`.
+- AKS: `node_provisioning_profile` is now set (default `mode = "Manual"`), `automatic_upgrade_channel`, `api_server_access_profile.authorized_ip_ranges`, `network_data_plane`, `web_app_routing.dns_zone_ids` and the `*_enabled` default node pool attributes are used.
+- Key vault: `contacts` moved to `azurerm_key_vault_certificate_contacts`.
+- API management: `policy` moved to `azurerm_api_management_policy`.
+- Synapse: `aad_admin` moved to `azurerm_synapse_workspace_aad_admin`.
+- Service bus: network rule sets are configured inline on the namespace.
+- App service plan now uses `azurerm_service_plan`, static sites use `azurerm_static_web_app`, SQL failover groups use `azurerm_mssql_failover_group`.
+- Diagnostics settings: `retention_policy` was removed by the provider, `metric` is now `enabled_metric`.
+
+### Removed (retired by Azure / removed from the provider):
+- MariaDB servers, MySQL (single server) and PostgreSQL (single server) modules. Use the flexible server modules.
+- `azurerm_app_service` / `azurerm_app_service_slot` / `azurerm_function_app` modules and App Service Environment v2 (ASEv3 is kept).
+- Integration service environment (logic apps) and batch certificates.
+- Azure container registry virtual network rules, consumption budget `filter.not`, azure_active_directory_role_based_access_control `managed`/`client_app_id`/`server_app_id`/`server_app_secret`, kusto `virtual_network_configuration`, container group `gpu`, sentinel automation rule `condition` (use `condition_json`).
+
+### Notes:
+Resources that were renamed (for example `azurerm_app_service_plan` -> `azurerm_service_plan`) need a state migration (`terraform state rm` + `import`) when they already exist.
+
 ## Add default_to_oauth_authentication to storage_account module
 - Date: 07/02/2024
 - File(s): modules/storage_account/storage_account.tf

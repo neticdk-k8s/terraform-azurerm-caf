@@ -10,26 +10,22 @@ resource "azurecaf_name" "plan" {
 }
 
 
-resource "azurerm_app_service_plan" "asp" {
+resource "azurerm_service_plan" "asp" {
   name                         = azurecaf_name.plan.result
   location                     = local.location
   resource_group_name          = local.resource_group_name
-  kind                         = try(var.kind, null)
   maximum_elastic_worker_count = lookup(var.settings, "maximum_elastic_worker_count", null)
 
-  # For kind=Linux must be set to true and for kind=Windows must be set to false
-  reserved         = lookup(var.settings, "reserved", null) == null ? null : var.settings.reserved
-  per_site_scaling = lookup(var.settings.sku, "per_site_scaling", false)
-  is_xenon         = lookup(var.settings, "is_xenon", null)
-
-  sku {
-    tier     = var.settings.sku.tier
-    size     = var.settings.sku.size
-    capacity = lookup(var.settings.sku, "capacity", null)
-  }
+  os_type = try(
+    var.settings.os_type,
+    lower(try(var.kind, "")) == "linux" || try(var.settings.reserved, false) == true ? "Linux" : (try(var.settings.is_xenon, false) == true ? "WindowsContainer" : "Windows")
+  )
+  sku_name                 = try(var.settings.sku_name, var.settings.sku.size)
+  worker_count             = try(var.settings.worker_count, lookup(var.settings.sku, "capacity", null))
+  per_site_scaling_enabled = lookup(var.settings.sku, "per_site_scaling", false)
 
   app_service_environment_id = var.app_service_environment_id
-  zone_redundant             = lookup(var.settings, "zone_redundant", null)
+  zone_balancing_enabled     = try(var.settings.zone_balancing_enabled, lookup(var.settings, "zone_redundant", null))
   tags                       = merge(local.tags, try(var.settings.tags, {}))
 
   timeouts {

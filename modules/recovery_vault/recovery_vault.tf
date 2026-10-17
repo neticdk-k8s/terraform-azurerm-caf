@@ -17,7 +17,6 @@ resource "azurerm_recovery_services_vault" "asr" {
   resource_group_name = local.resource_group_name
   sku                 = "Standard"
   tags                = merge(local.tags, try(var.settings.tags, null))
-  soft_delete_enabled = try(var.settings.soft_delete_enabled, true)
   storage_mode_type   = try(var.settings.storage_mode_type, "GeoRedundant")
 
   identity {

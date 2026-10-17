@@ -3,7 +3,7 @@ resource "azurerm_key_vault_secret" "client_id" {
   for_each = try(var.settings.keyvaults, {})
 
   name         = format("%s-client-id", each.value.secret_prefix)
-  value        = var.service_principal_application_id
+  value        = var.service_principal_client_id
   key_vault_id = try(each.value.lz_key, null) == null ? var.keyvaults[var.client_config.landingzone_key][each.key].id : var.keyvaults[each.value.lz_key][each.key].id
 }
 

@@ -27,7 +27,7 @@ resource "azurerm_key_vault" "keyvault" {
   enabled_for_template_deployment = try(var.settings.enabled_for_template_deployment, false)
   purge_protection_enabled        = try(var.settings.purge_protection_enabled, false)
   soft_delete_retention_days      = try(var.settings.soft_delete_retention_days, 7)
-  enable_rbac_authorization       = try(var.settings.enable_rbac_authorization, false)
+  rbac_authorization_enabled      = try(var.settings.rbac_authorization_enabled, var.settings.enable_rbac_authorization, false)
   public_network_access_enabled   = try(var.settings.public_network_access_enabled, null)
   timeouts {
     delete = "60m"
@@ -47,6 +47,18 @@ resource "azurerm_key_vault" "keyvault" {
     }
   }
 
+  lifecycle {
+    ignore_changes = [
+      resource_group_name, location
+    ]
+  }
+}
+
+resource "azurerm_key_vault_certificate_contacts" "contacts" {
+  count = length(lookup(var.settings, "contacts", {})) == 0 ? 0 : 1
+
+  key_vault_id = azurerm_key_vault.keyvault.id
+
   dynamic "contact" {
     for_each = lookup(var.settings, "contacts", {})
 
@@ -55,11 +67,5 @@ resource "azurerm_key_vault" "keyvault" {
       name  = try(contact.value.name, null)
       phone = try(contact.value.phone, null)
     }
-  }
-
-  lifecycle {
-    ignore_changes = [
-      resource_group_name, location
-    ]
   }
 }

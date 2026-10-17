@@ -8,7 +8,7 @@ resource "azurecaf_name" "static_site" {
   use_slug      = var.global_settings.use_slug
 }
 
-resource "azurerm_static_site" "static_site" {
+resource "azurerm_static_web_app" "static_site" {
   name                = azurecaf_name.static_site.result
   location            = var.location
   resource_group_name = var.resource_group_name
