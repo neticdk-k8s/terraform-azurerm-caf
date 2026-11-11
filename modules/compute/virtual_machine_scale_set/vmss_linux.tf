@@ -82,11 +82,18 @@ resource "azurerm_linux_virtual_machine_scale_set" "vmss" {
   priority                        = try(each.value.priority, null)
   provision_vm_agent              = try(each.value.provision_vm_agent, true)
   proximity_placement_group_id    = can(each.value.proximity_placement_group_key) || can(each.value.proximity_placement_group.key) ? var.proximity_placement_groups[try(var.client_config.landingzone_key, var.client_config.landingzone_key)][try(each.value.proximity_placement_group_key, each.value.proximity_placement_group.key)].id : try(each.value.proximity_placement_group_id, each.value.proximity_placement_group.id, null)
-  scale_in_policy                 = try(each.value.scale_in_policy, null)
   single_placement_group          = try(each.value.single_placement_group, null)
-  upgrade_mode                    = try(each.value.upgrade_mode, null)
-  zone_balance                    = try(each.value.zone_balance, null)
-  zones                           = try(each.value.zones, null)
+  dynamic "scale_in" {
+    for_each = try(each.value.scale_in_policy, null) == null ? [] : [1]
+
+    content {
+      rule = each.value.scale_in_policy
+    }
+  }
+
+  upgrade_mode = try(each.value.upgrade_mode, null)
+  zone_balance = try(each.value.zone_balance, null)
+  zones        = try(each.value.zones, null)
 
   dynamic "admin_ssh_key" {
     for_each = lookup(each.value, "disable_password_authentication", true) == true ? [1] : []
@@ -101,11 +108,11 @@ resource "azurerm_linux_virtual_machine_scale_set" "vmss" {
     for_each = try(var.settings.network_interfaces, {})
 
     content {
-      name                          = azurecaf_name.linux_nic[network_interface.key].result
-      primary                       = try(network_interface.value.primary, false)
-      enable_accelerated_networking = try(network_interface.value.enable_accelerated_networking, false)
-      enable_ip_forwarding          = try(network_interface.value.enable_ip_forwarding, false)
-      network_security_group_id     = try(network_interface.value.network_security_group_id, null)
+      name                           = azurecaf_name.linux_nic[network_interface.key].result
+      primary                        = try(network_interface.value.primary, false)
+      accelerated_networking_enabled = try(network_interface.value.accelerated_networking_enabled, network_interface.value.enable_accelerated_networking, false)
+      ip_forwarding_enabled          = try(network_interface.value.ip_forwarding_enabled, network_interface.value.enable_ip_forwarding, false)
+      network_security_group_id      = try(network_interface.value.network_security_group_id, null)
 
       ip_configuration {
         name      = azurecaf_name.linux_nic[network_interface.key].result
@@ -135,15 +142,15 @@ resource "azurerm_linux_virtual_machine_scale_set" "vmss" {
     for_each = try(var.settings.data_disks, {})
 
     content {
-      caching                        = data_disk.value.caching
-      create_option                  = try(data_disk.value.create_option, null)
-      disk_encryption_set_id         = try(data_disk.value.disk_encryption_set_key, null) == null ? null : try(var.disk_encryption_sets[var.client_config.landingzone_key][data_disk.value.disk_encryption_set_key].id, var.disk_encryption_sets[data_disk.value.lz_key][data_disk.value.disk_encryption_set_key].id, null)
-      ultra_ssd_disk_iops_read_write = try(data_disk.value.storage_account_type == "UltraSSD_LRS" ? try(data_disk.value.disk_iops_read_write, data_disk.value.ultra_ssd_disk_iops_read_write) : null, null)
-      ultra_ssd_disk_mbps_read_write = try(data_disk.value.storage_account_type == "UltraSSD_LRS" ? try(data_disk.value.disk_mbps_read_write, data_disk.value.ultra_ssd_disk_mbps_read_write) : null, null)
-      disk_size_gb                   = data_disk.value.disk_size_gb
-      lun                            = data_disk.value.lun
-      storage_account_type           = data_disk.value.storage_account_type
-      write_accelerator_enabled      = try(data_disk.value.write_accelerator_enabled, null)
+      caching                   = data_disk.value.caching
+      create_option             = try(data_disk.value.create_option, null)
+      disk_encryption_set_id    = try(data_disk.value.disk_encryption_set_key, null) == null ? null : try(var.disk_encryption_sets[var.client_config.landingzone_key][data_disk.value.disk_encryption_set_key].id, var.disk_encryption_sets[data_disk.value.lz_key][data_disk.value.disk_encryption_set_key].id, null)
+      disk_iops_read_write      = try(data_disk.value.storage_account_type == "UltraSSD_LRS" ? try(data_disk.value.disk_iops_read_write, data_disk.value.ultra_ssd_disk_iops_read_write) : null, null)
+      disk_mbps_read_write      = try(data_disk.value.storage_account_type == "UltraSSD_LRS" ? try(data_disk.value.disk_mbps_read_write, data_disk.value.ultra_ssd_disk_mbps_read_write) : null, null)
+      disk_size_gb              = data_disk.value.disk_size_gb
+      lun                       = data_disk.value.lun
+      storage_account_type      = data_disk.value.storage_account_type
+      write_accelerator_enabled = try(data_disk.value.write_accelerator_enabled, null)
     }
   }
 
@@ -229,8 +236,8 @@ resource "azurerm_linux_virtual_machine_scale_set" "vmss" {
     for_each = try(each.value.automatic_os_upgrade_policy, false) == false ? [] : [1]
 
     content {
-      disable_automatic_rollback  = each.value.automatic_os_upgrade_policy.disable_automatic_rollback
-      enable_automatic_os_upgrade = each.value.automatic_os_upgrade_policy.enable_automatic_os_upgrade
+      automatic_rollback_enabled   = !try(each.value.automatic_os_upgrade_policy.disable_automatic_rollback, false)
+      automatic_os_upgrade_enabled = try(each.value.automatic_os_upgrade_policy.enable_automatic_os_upgrade, false)
     }
   }
 
@@ -273,11 +280,18 @@ resource "azurerm_linux_virtual_machine_scale_set" "vmss_autoscaled" {
   priority                        = try(each.value.priority, null)
   provision_vm_agent              = try(each.value.provision_vm_agent, true)
   proximity_placement_group_id    = try(var.proximity_placement_groups[var.client_config.landingzone_key][each.value.proximity_placement_group_key].id, var.proximity_placement_groups[each.value.proximity_placement_groups].id, null)
-  scale_in_policy                 = try(each.value.scale_in_policy, null)
   single_placement_group          = try(each.value.single_placement_group, null)
-  upgrade_mode                    = try(each.value.upgrade_mode, null)
-  zone_balance                    = try(each.value.zone_balance, null)
-  zones                           = try(each.value.zones, null)
+  dynamic "scale_in" {
+    for_each = try(each.value.scale_in_policy, null) == null ? [] : [1]
+
+    content {
+      rule = each.value.scale_in_policy
+    }
+  }
+
+  upgrade_mode = try(each.value.upgrade_mode, null)
+  zone_balance = try(each.value.zone_balance, null)
+  zones        = try(each.value.zones, null)
 
   dynamic "admin_ssh_key" {
     for_each = lookup(each.value, "disable_password_authentication", true) == true ? [1] : []
@@ -292,11 +306,11 @@ resource "azurerm_linux_virtual_machine_scale_set" "vmss_autoscaled" {
     for_each = try(var.settings.network_interfaces, {})
 
     content {
-      name                          = azurecaf_name.linux_nic[network_interface.key].result
-      primary                       = try(network_interface.value.primary, false)
-      enable_accelerated_networking = try(network_interface.value.enable_accelerated_networking, false)
-      enable_ip_forwarding          = try(network_interface.value.enable_ip_forwarding, false)
-      network_security_group_id     = try(network_interface.value.network_security_group_id, null)
+      name                           = azurecaf_name.linux_nic[network_interface.key].result
+      primary                        = try(network_interface.value.primary, false)
+      accelerated_networking_enabled = try(network_interface.value.accelerated_networking_enabled, network_interface.value.enable_accelerated_networking, false)
+      ip_forwarding_enabled          = try(network_interface.value.ip_forwarding_enabled, network_interface.value.enable_ip_forwarding, false)
+      network_security_group_id      = try(network_interface.value.network_security_group_id, null)
 
       ip_configuration {
         name      = azurecaf_name.linux_nic[network_interface.key].result
@@ -331,15 +345,15 @@ resource "azurerm_linux_virtual_machine_scale_set" "vmss_autoscaled" {
     for_each = try(var.settings.data_disks, {})
 
     content {
-      caching                        = data_disk.value.caching
-      create_option                  = try(data_disk.value.create_option, null)
-      disk_encryption_set_id         = try(data_disk.value.disk_encryption_set_key, null) == null ? null : try(var.disk_encryption_sets[var.client_config.landingzone_key][data_disk.value.disk_encryption_set_key].id, var.disk_encryption_sets[data_disk.value.lz_key][data_disk.value.disk_encryption_set_key].id, null)
-      ultra_ssd_disk_iops_read_write = try(data_disk.value.storage_account_type == "UltraSSD_LRS" ? try(data_disk.value.disk_iops_read_write, data_disk.value.ultra_ssd_disk_iops_read_write) : null, null)
-      ultra_ssd_disk_mbps_read_write = try(data_disk.value.storage_account_type == "UltraSSD_LRS" ? try(data_disk.value.disk_mbps_read_write, ultra_ssd_disk_mbps_read_write) : null, null)
-      disk_size_gb                   = data_disk.value.disk_size_gb
-      lun                            = data_disk.value.lun
-      storage_account_type           = data_disk.value.storage_account_type
-      write_accelerator_enabled      = try(data_disk.value.write_accelerator_enabled, null)
+      caching                   = data_disk.value.caching
+      create_option             = try(data_disk.value.create_option, null)
+      disk_encryption_set_id    = try(data_disk.value.disk_encryption_set_key, null) == null ? null : try(var.disk_encryption_sets[var.client_config.landingzone_key][data_disk.value.disk_encryption_set_key].id, var.disk_encryption_sets[data_disk.value.lz_key][data_disk.value.disk_encryption_set_key].id, null)
+      disk_iops_read_write      = try(data_disk.value.storage_account_type == "UltraSSD_LRS" ? try(data_disk.value.disk_iops_read_write, data_disk.value.ultra_ssd_disk_iops_read_write) : null, null)
+      disk_mbps_read_write      = try(data_disk.value.storage_account_type == "UltraSSD_LRS" ? try(data_disk.value.disk_mbps_read_write, ultra_ssd_disk_mbps_read_write) : null, null)
+      disk_size_gb              = data_disk.value.disk_size_gb
+      lun                       = data_disk.value.lun
+      storage_account_type      = data_disk.value.storage_account_type
+      write_accelerator_enabled = try(data_disk.value.write_accelerator_enabled, null)
     }
   }
 
@@ -426,8 +440,8 @@ resource "azurerm_linux_virtual_machine_scale_set" "vmss_autoscaled" {
     for_each = try(each.value.automatic_os_upgrade_policy, false) == false ? [] : [1]
 
     content {
-      disable_automatic_rollback  = each.value.automatic_os_upgrade_policy.disable_automatic_rollback
-      enable_automatic_os_upgrade = each.value.automatic_os_upgrade_policy.enable_automatic_os_upgrade
+      automatic_rollback_enabled   = !try(each.value.automatic_os_upgrade_policy.disable_automatic_rollback, false)
+      automatic_os_upgrade_enabled = try(each.value.automatic_os_upgrade_policy.enable_automatic_os_upgrade, false)
     }
   }
 

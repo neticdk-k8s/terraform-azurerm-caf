@@ -9,9 +9,6 @@ variable "batch_account" {}
 variable "managed_identities" {
   default = {}
 }
-variable "batch_certificates" {
-  default = {}
-}
 variable "vnets" {
   default = {}
 }

@@ -47,11 +47,11 @@ resource "azurerm_network_interface" "nic" {
   location            = local.location
   resource_group_name = local.resource_group_name
 
-  dns_servers                   = lookup(each.value, "dns_servers", null)
-  enable_ip_forwarding          = lookup(each.value, "enable_ip_forwarding", false)
-  enable_accelerated_networking = lookup(each.value, "enable_accelerated_networking", false)
-  internal_dns_name_label       = lookup(each.value, "internal_dns_name_label", null)
-  tags                          = merge(local.tags, try(each.value.tags, null))
+  dns_servers                    = lookup(each.value, "dns_servers", null)
+  ip_forwarding_enabled          = try(each.value.ip_forwarding_enabled, each.value.enable_ip_forwarding, false)
+  accelerated_networking_enabled = try(each.value.accelerated_networking_enabled, each.value.enable_accelerated_networking, false)
+  internal_dns_name_label        = lookup(each.value, "internal_dns_name_label", null)
+  tags                           = merge(local.tags, try(each.value.tags, null))
 
   ip_configuration {
     name                          = azurecaf_name.nic[each.key].result

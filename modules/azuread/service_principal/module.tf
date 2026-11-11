@@ -1,6 +1,6 @@
 
 resource "azuread_service_principal" "app" {
-  application_id               = var.application_id
+  client_id                    = var.client_id
   app_role_assignment_required = try(var.settings.app_role_assignment_required, false)
   tags                         = try(var.settings.tags, null)
 
@@ -12,7 +12,7 @@ resource "azuread_service_principal" "app" {
   )
 
   # lifecycle {
-  #   ignore_changes = [application_id]
+  #   ignore_changes = [client_id]
   # }
 }
 

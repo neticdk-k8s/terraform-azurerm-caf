@@ -9,7 +9,9 @@ resource "azurecaf_name" "backup_vault_policy" {
 }
 
 resource "azurerm_data_protection_backup_policy_blob_storage" "backup_vault_policy" {
-  name               = azurecaf_name.backup_vault_policy.result
-  vault_id           = var.vault_id
-  retention_duration = var.settings.retention_duration
+  name                                   = azurecaf_name.backup_vault_policy.result
+  vault_id                               = var.vault_id
+  operational_default_retention_duration = try(var.settings.operational_default_retention_duration, var.settings.retention_duration, null)
+  vault_default_retention_duration       = try(var.settings.vault_default_retention_duration, null)
+  backup_repeating_time_intervals        = try(var.settings.backup_repeating_time_intervals, null)
 }

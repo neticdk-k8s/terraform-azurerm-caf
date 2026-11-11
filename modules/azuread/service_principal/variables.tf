@@ -7,7 +7,7 @@ variable "settings" {
 variable "client_config" {
   description = "Client configuration object (see module README.md)."
 }
-variable "application_id" {
+variable "client_id" {
   description = "Application ID of the service principal to create."
 }
 variable "azuread_api_permissions" {

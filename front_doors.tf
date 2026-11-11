@@ -25,7 +25,7 @@ output "front_doors" {
 # Register Azure FrontDoor service in the directory.
 #
 locals {
-  front_door_application_id = "ad0e1c7e-6d38-4ba4-9efd-0bc77ba9f037"
+  front_door_client_id = "ad0e1c7e-6d38-4ba4-9efd-0bc77ba9f037"
 }
 
 # Execute the SP creation before from the AZ cli
@@ -37,7 +37,7 @@ data "azuread_service_principal" "front_door" {
     for key, value in local.networking.front_doors : key => value
     if try(value.keyvault_key, null) != null
   }
-  application_id = local.front_door_application_id
+  client_id = local.front_door_client_id
 }
 
 module "front_doors_keyvault_access_policy" {

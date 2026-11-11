@@ -26,7 +26,7 @@ resource "azurerm_storage_account" "stg" {
   allow_nested_items_to_be_public   = try(var.storage_account.allow_nested_items_to_be_public, var.storage_account.allow_blob_public_access, false)
   cross_tenant_replication_enabled  = try(var.storage_account.cross_tenant_replication_enabled, null)
   edge_zone                         = try(var.storage_account.edge_zone, null)
-  enable_https_traffic_only         = try(var.storage_account.enable_https_traffic_only, true)
+  https_traffic_only_enabled        = try(var.storage_account.https_traffic_only_enabled, var.storage_account.enable_https_traffic_only, true)
   infrastructure_encryption_enabled = try(var.storage_account.infrastructure_encryption_enabled, null)
   large_file_share_enabled          = try(var.storage_account.large_file_share_enabled, null)
   location                          = local.location
@@ -104,67 +104,6 @@ resource "azurerm_storage_account" "stg" {
           days = try(var.storage_account.blob_properties.container_delete_retention_policy.container_delete_retention_policy, 7)
         }
       }
-    }
-  }
-
-  dynamic "queue_properties" {
-    for_each = lookup(var.storage_account, "queue_properties", false) == false ? [] : [1]
-
-    content {
-      dynamic "cors_rule" {
-        for_each = lookup(var.storage_account.queue_properties, "cors_rule", false) == false ? [] : [1]
-
-        content {
-          allowed_headers    = var.storage_account.queue_properties.cors_rule.allowed_headers
-          allowed_methods    = var.storage_account.queue_properties.cors_rule.allowed_methods
-          allowed_origins    = var.storage_account.queue_properties.cors_rule.allowed_origins
-          exposed_headers    = var.storage_account.queue_properties.cors_rule.exposed_headers
-          max_age_in_seconds = var.storage_account.queue_properties.cors_rule.max_age_in_seconds
-        }
-      }
-
-      dynamic "logging" {
-        for_each = lookup(var.storage_account.queue_properties, "logging", false) == false ? [] : [1]
-
-        content {
-          delete                = var.storage_account.queue_properties.logging.delete
-          read                  = var.storage_account.queue_properties.logging.read
-          write                 = var.storage_account.queue_properties.logging.write
-          version               = var.storage_account.queue_properties.logging.version
-          retention_policy_days = try(var.storage_account.queue_properties.logging.retention_policy_days, 7)
-        }
-      }
-
-      dynamic "minute_metrics" {
-        for_each = lookup(var.storage_account.queue_properties, "minute_metrics", false) == false ? [] : [1]
-
-        content {
-          enabled               = var.storage_account.queue_properties.minute_metrics.enabled
-          version               = var.storage_account.queue_properties.minute_metrics.version
-          include_apis          = try(var.storage_account.queue_properties.minute_metrics.include_apis, null)
-          retention_policy_days = try(var.storage_account.queue_properties.minute_metrics.retention_policy_days, 7)
-        }
-      }
-
-      dynamic "hour_metrics" {
-        for_each = lookup(var.storage_account.queue_properties, "hour_metrics", false) == false ? [] : [1]
-
-        content {
-          enabled               = var.storage_account.queue_properties.hour_metrics.enabled
-          version               = var.storage_account.queue_properties.hour_metrics.version
-          include_apis          = try(var.storage_account.queue_properties.hour_metrics.include_apis, null)
-          retention_policy_days = try(var.storage_account.queue_properties.hour_metrics.retention_policy_days, 7)
-        }
-      }
-    }
-  }
-
-  dynamic "static_website" {
-    for_each = lookup(var.storage_account, "static_website", false) == false ? [] : [1]
-
-    content {
-      index_document     = try(var.storage_account.static_website.index_document, null)
-      error_404_document = try(var.storage_account.static_website.error_404_document, null)
     }
   }
 
@@ -256,11 +195,70 @@ resource "azurerm_storage_account" "stg" {
   }
 }
 
+resource "azurerm_storage_account_queue_properties" "stg" {
+  count = lookup(var.storage_account, "queue_properties", false) == false ? 0 : 1
+
+  storage_account_id = azurerm_storage_account.stg.id
+
+  dynamic "cors_rule" {
+    for_each = lookup(var.storage_account.queue_properties, "cors_rule", false) == false ? [] : [1]
+
+    content {
+      allowed_headers    = var.storage_account.queue_properties.cors_rule.allowed_headers
+      allowed_methods    = var.storage_account.queue_properties.cors_rule.allowed_methods
+      allowed_origins    = var.storage_account.queue_properties.cors_rule.allowed_origins
+      exposed_headers    = var.storage_account.queue_properties.cors_rule.exposed_headers
+      max_age_in_seconds = var.storage_account.queue_properties.cors_rule.max_age_in_seconds
+    }
+  }
+
+  dynamic "logging" {
+    for_each = lookup(var.storage_account.queue_properties, "logging", false) == false ? [] : [1]
+
+    content {
+      delete                = var.storage_account.queue_properties.logging.delete
+      read                  = var.storage_account.queue_properties.logging.read
+      write                 = var.storage_account.queue_properties.logging.write
+      version               = var.storage_account.queue_properties.logging.version
+      retention_policy_days = try(var.storage_account.queue_properties.logging.retention_policy_days, 7)
+    }
+  }
+
+  dynamic "minute_metrics" {
+    for_each = lookup(var.storage_account.queue_properties, "minute_metrics", false) == false ? [] : [1]
+
+    content {
+      version               = var.storage_account.queue_properties.minute_metrics.version
+      include_apis          = try(var.storage_account.queue_properties.minute_metrics.include_apis, null)
+      retention_policy_days = try(var.storage_account.queue_properties.minute_metrics.retention_policy_days, 7)
+    }
+  }
+
+  dynamic "hour_metrics" {
+    for_each = lookup(var.storage_account.queue_properties, "hour_metrics", false) == false ? [] : [1]
+
+    content {
+      version               = var.storage_account.queue_properties.hour_metrics.version
+      include_apis          = try(var.storage_account.queue_properties.hour_metrics.include_apis, null)
+      retention_policy_days = try(var.storage_account.queue_properties.hour_metrics.retention_policy_days, 7)
+    }
+  }
+}
+
+resource "azurerm_storage_account_static_website" "stg" {
+  count = lookup(var.storage_account, "static_website", false) == false ? 0 : 1
+
+  storage_account_id = azurerm_storage_account.stg.id
+  index_document     = try(var.storage_account.static_website.index_document, null)
+  error_404_document = try(var.storage_account.static_website.error_404_document, null)
+}
+
 module "queue" {
   source   = "./queue"
   for_each = try(var.storage_account.queues, {})
 
   storage_account_name = azurerm_storage_account.stg.name
+  storage_account_id   = azurerm_storage_account.stg.id
   settings             = each.value
 }
 
@@ -269,6 +267,7 @@ module "container" {
   for_each = try(var.storage_account.containers, {})
 
   storage_account_name = azurerm_storage_account.stg.name
+  storage_account_id   = azurerm_storage_account.stg.id
   settings             = each.value
   var_folder_path      = var.var_folder_path
 }

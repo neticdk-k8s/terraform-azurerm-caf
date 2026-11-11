@@ -12,7 +12,7 @@ variable "keyvaults" {
 }
 
 variable "resources" {
-  description = "Application ID the credentials will be attached to."
+  description = "Client ID the credentials will be attached to."
 }
 
 variable "credential_policy" {

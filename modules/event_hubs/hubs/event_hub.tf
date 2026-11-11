@@ -12,12 +12,11 @@ resource "azurecaf_name" "evhub" {
 # Ref : https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/eventhub_authorization_rule
 
 resource "azurerm_eventhub" "evhub" {
-  name                = azurecaf_name.evhub.result
-  namespace_name      = var.namespace_name
-  resource_group_name = var.resource_group_name
-  partition_count     = var.settings.partition_count
-  message_retention   = var.settings.message_retention
-  status              = try(var.settings.status, null)
+  name              = azurecaf_name.evhub.result
+  namespace_id      = var.namespace_id
+  partition_count   = var.settings.partition_count
+  message_retention = var.settings.message_retention
+  status            = try(var.settings.status, null)
 
   dynamic "capture_description" {
     for_each = try(var.settings.capture_description, false) == false ? [] : [1]

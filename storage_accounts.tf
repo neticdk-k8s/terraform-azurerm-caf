@@ -39,9 +39,20 @@ resource "azurerm_storage_account_customer_managed_key" "cmk" {
   }
 
   storage_account_id = module.storage_accounts[each.key].id
-  key_vault_id       = local.combined_objects_keyvaults[try(each.value.customer_managed_key.lz_key, local.client_config.landingzone_key)][each.value.customer_managed_key.keyvault_key].id
-  key_name           = can(each.value.customer_managed_key.key_name) ? each.value.customer_managed_key.key_name : local.combined_objects_keyvault_keys[try(each.value.customer_managed_key.lz_key, local.client_config.landingzone_key)][each.value.customer_managed_key.keyvault_key_key].name
-  key_version        = try(each.value.customer_managed_key.key_version, null)
+  key_vault_key_id = (
+    can(each.value.customer_managed_key.key_name)
+    ? format(
+      "%skeys/%s%s",
+      local.combined_objects_keyvaults[try(each.value.customer_managed_key.lz_key, local.client_config.landingzone_key)][each.value.customer_managed_key.keyvault_key].vault_uri,
+      each.value.customer_managed_key.key_name,
+      try(each.value.customer_managed_key.key_version, null) == null ? "" : format("/%s", each.value.customer_managed_key.key_version)
+    )
+    : (
+      try(each.value.customer_managed_key.key_version, null) == null
+      ? local.combined_objects_keyvault_keys[try(each.value.customer_managed_key.lz_key, local.client_config.landingzone_key)][each.value.customer_managed_key.keyvault_key_key].versionless_id
+      : format("%s/%s", local.combined_objects_keyvault_keys[try(each.value.customer_managed_key.lz_key, local.client_config.landingzone_key)][each.value.customer_managed_key.keyvault_key_key].versionless_id, each.value.customer_managed_key.key_version)
+    )
+  )
 }
 
 module "encryption_scopes" {

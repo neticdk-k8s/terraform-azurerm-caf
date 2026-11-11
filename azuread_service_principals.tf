@@ -12,7 +12,7 @@ module "azuread_service_principals" {
   azuread_api_permissions = try(local.azuread.azuread_api_permissions[each.key], {})
   user_type               = var.user_type
 
-  application_id = can(each.value.azuread_application.application_id) ? each.value.azuread_application.application_id : local.combined_objects_azuread_applications[try(each.value.azuread_application.lz_key, local.client_config.landingzone_key)][each.value.azuread_application.key].application_id
+  client_id = can(each.value.azuread_application.client_id) ? each.value.azuread_application.client_id : local.combined_objects_azuread_applications[try(each.value.azuread_application.lz_key, local.client_config.landingzone_key)][each.value.azuread_application.key].client_id
 
 }
 

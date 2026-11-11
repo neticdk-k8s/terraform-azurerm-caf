@@ -30,13 +30,12 @@ resource "azurerm_sentinel_automation_rule" "automation_rule" {
     }
   }
 
-  dynamic "condition" {
-    for_each = try(var.settings.condition, {})
+  condition_json = try(var.settings.condition_json, null)
 
-    content {
-      operator = try(condition.value.operator, null)
-      property = try(condition.value.property, null)
-      values   = try(condition.value.values, null)
+  lifecycle {
+    precondition {
+      condition     = !can(var.settings.condition) || can(var.settings.condition_json)
+      error_message = "The 'condition' block is no longer supported with azurerm v5 - use 'condition_json' instead."
     }
   }
 }

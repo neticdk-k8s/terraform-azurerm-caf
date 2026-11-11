@@ -31,7 +31,7 @@ resource "azurerm_iot_security_solution" "securitysolution" {
   log_analytics_workspace_id = try(var.settings.log_analytics_workspace_id, null)
   log_unmasked_ips_enabled   = try(var.settings.log_unmasked_ips_enabled, null)
 
-  dynamic "recommendations_enabled" {
+  dynamic "recommendations" {
     for_each = lookup(var.settings, "recommendations_enabled", {}) == {} ? [] : [1]
     content {
       acr_authentication               = try(var.settings.recommendations_enabled.acr_authentication, null)

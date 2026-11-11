@@ -15,9 +15,16 @@ resource "azurerm_subnet" "subnet" {
   resource_group_name                           = var.resource_group_name
   virtual_network_name                          = var.virtual_network_name
   address_prefixes                              = var.address_prefixes
-  service_endpoints                             = var.service_endpoints
-  private_endpoint_network_policies_enabled     = try(var.private_endpoint_network_policies_enabled, null)
+  private_endpoint_network_policies             = var.private_endpoint_network_policies_enabled == null ? null : (tobool(var.private_endpoint_network_policies_enabled) ? "Enabled" : "Disabled")
   private_link_service_network_policies_enabled = try(var.private_link_service_network_policies_enabled, null)
+
+  dynamic "service_endpoint" {
+    for_each = toset(var.service_endpoints)
+
+    content {
+      service = service_endpoint.value
+    }
+  }
 
   dynamic "delegation" {
     for_each = try(var.settings.delegation, null) == null ? [] : [1]

@@ -3,7 +3,7 @@ output "cosmos_account" {
 }
 
 output "connection_string" {
-  value = azurerm_cosmosdb_account.cosmos_account.connection_strings[0]
+  value = azurerm_cosmosdb_account.cosmos_account.primary_sql_connection_string
 }
 
 output "primary_key" {
