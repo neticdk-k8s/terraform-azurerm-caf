@@ -546,10 +546,9 @@ resource "azurerm_kubernetes_cluster_node_pool" "nodepools" {
   scale_down_mode              = try(each.value.scale_down_mode, null)
   ultra_ssd_enabled            = try(each.value.ultra_ssd_enabled, false)
   dynamic "upgrade_settings" {
-    for_each = try(each.value.upgrade_settings, null) == null ? [] : [1]
+    for_each = try(each.value.priority, null) == "Spot" || try(each.value.upgrade_settings.max_surge, null) == null || try(each.value.upgrade_settings.max_surge, null) == "" ? [] : [1]
     content {
-      #max_surge = upgrade_settings.value.max_surge
-      max_surge = lookup(each.value.upgrade_settings, "max_surge") # This shit works - MFR
+      max_surge = each.value.upgrade_settings.max_surge
     }
   }
 
