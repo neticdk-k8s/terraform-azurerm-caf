@@ -1,5 +1,16 @@
 # This file is to see deviants done by Netic
 
+## webapps/asp: use azurerm_service_plan as azurecaf resource_type
+- Date: 12/11/2026
+- File(s): modules/webapps/asp/module.tf
+- Who: CRL
+
+### Reason:
+azurecaf 2.0.0 removed `azurerm_app_service_plan` from its valid resource types, so `terraform init -upgrade` followed by plan failed with `expected resource_type to be one of [...]`.
+
+### What changed:
+- `azurecaf_name.plan` uses `azurerm_service_plan`, matching the `azurerm_service_plan` resource it names.
+
 ## AKS: pass through cost_analysis_enabled, image_cleaner_*, node_os_upgrade_channel
 - Date: 12/11/2026
 - File(s): modules/compute/aks/aks.tf
