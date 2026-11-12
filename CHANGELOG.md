@@ -1,0 +1,104 @@
+# This file is to see deviants done by Netic
+
+## AKS: pass through cost_analysis_enabled, image_cleaner_*, node_os_upgrade_channel
+- Date: 12/11/2026
+- File(s): modules/compute/aks/aks.tf
+- Who: CRL
+
+### Reason:
+`cost_analysis_enabled` was dropped in the azurerm 5 migration and the other attributes were never passed, causing drift (`true -> null`, `48 -> null`, `+ NodeImage`) on existing clusters.
+
+### What changed:
+- `cost_analysis_enabled`, `image_cleaner_enabled`, `image_cleaner_interval_hours` and `node_os_upgrade_channel` are read from `settings` (default `false` for `cost_analysis_enabled`, `null` for the rest).
+
+## Raise providers to azurerm >= 5.9, azuread >= 3.10, azapi >= 2.13
+- Date: 15/10/2026
+- File(s): main.tf and a large number of files under modules/ (see git history of this change)
+- Who: CRL
+- Validated with: `terraform validate` against azurerm 5.9.0, azuread 3.10, azapi 2.13 (no errors)
+
+### Reason:
+The provider constraints were raised to the latest major versions. The module was written for azurerm 3.68 and therefore had to be migrated to the azurerm 4.x / 5.x schema.
+
+### What changed:
+- Renamed arguments to their new names, keeping the old setting names as fallbacks where possible (`enable_*` -> `*_enabled`, `*_disabled` -> `*_enabled`, `storage_account_name` -> `storage_account_id`, `zone_name`/`resource_group_name` -> `private_dns_zone_id`, `application_object_id` -> `application_id`, ...).
+- Storage account: `queue_properties` and `static_website` are now the separate resources `azurerm_storage_account_queue_properties` and `azurerm_storage_account_static_website`. Containers, queues, blobs, file shares and directories use the ARM id / url of their parent.
+- Customer managed keys on storage accounts use `key_vault_key_id`.
+- AKS: `node_provisioning_profile` is now set (default `mode = "Manual"`), `automatic_upgrade_channel`, `api_server_access_profile.authorized_ip_ranges`, `network_data_plane`, `web_app_routing.dns_zone_ids` and the `*_enabled` default node pool attributes are used.
+- Key vault: `contacts` moved to `azurerm_key_vault_certificate_contacts`.
+- API management: `policy` moved to `azurerm_api_management_policy`.
+- Synapse: `aad_admin` moved to `azurerm_synapse_workspace_aad_admin`.
+- Service bus: network rule sets are configured inline on the namespace.
+- App service plan now uses `azurerm_service_plan`, static sites use `azurerm_static_web_app`, SQL failover groups use `azurerm_mssql_failover_group`.
+- Diagnostics settings: `retention_policy` was removed by the provider, `metric` is now `enabled_metric`.
+
+### Removed (retired by Azure / removed from the provider):
+- MariaDB servers, MySQL (single server) and PostgreSQL (single server) modules. Use the flexible server modules.
+- `azurerm_app_service` / `azurerm_app_service_slot` / `azurerm_function_app` modules and App Service Environment v2 (ASEv3 is kept).
+- Integration service environment (logic apps) and batch certificates.
+- Azure container registry virtual network rules, consumption budget `filter.not`, azure_active_directory_role_based_access_control `managed`/`client_app_id`/`server_app_id`/`server_app_secret`, kusto `virtual_network_configuration`, container group `gpu`, sentinel automation rule `condition` (use `condition_json`).
+
+### Notes:
+Resources that were renamed (for example `azurerm_app_service_plan` -> `azurerm_service_plan`) need a state migration (`terraform state rm` + `import`) when they already exist.
+
+## Add default_to_oauth_authentication to storage_account module
+- Date: 07/02/2024
+- File(s): modules/storage_account/storage_account.tf
+- Who: JTL (Entry made by MFR)
+- PR: https://github.com/neticdk-k8s/terraform-azurerm-caf/pull/4/files
+
+### Reason:
+The default_to_oauth_authentication attribute is missing in the CAF module, so we added it (https://registry.terraform.io/providers/hashicorp/azurerm/3.68.0/docs/resources/storage_account#default_to_oauth_authentication)
+
+## Fix naming of oauth2_permission_scope
+- Date: 07/02/2024
+- File(s): modules/azuread/applications/module.tf, modules/azuread/applications_v1/azuread_application.tf
+- Who: MFR
+- PR: https://github.com/neticdk-k8s/terraform-azurerm-caf/pull/4/files
+
+### Reason:
+In the for_each they used the wrong name of the dynamic oauth2_permission_scope, they've used "for_each = try(var.settings.api.oauth2_permission_scopes, [])" instead of "for_each = try(var.settings.api.oauth2_permission_scope, []) (the s in the end of oauth2_permission_scopes need to be removed)"
+
+## Fix Storage Account Customer managed Key Conflict
+- Date: 20/12/2023
+- File(s): modules/storage_account/storage_account.tf
+- Who: MFR
+- PR: https://github.com/neticdk-k8s/terraform-azurerm-caf/pull/3/files
+
+### Reason:
+For some unknown reason the azurerm_storage_account resource sometimes loads the customer_managed_key settings which it shouldn't, because it's using the resource azurerm_storage_account_customer_managed_key (You can find it in the https://github.com/neticdk-k8s/terraform-azurerm-caf/blob/5.7.3_linux_os_config/storage_accounts.tf file).
+
+That means there's actually two different resources that can configure Customer Managed Keys. The azurerm_storage_account resource and the azurerm_storage_account_customer_managed_key resource. USING BOTH WILL MAKE CONFLICT USE ONLY azurerm_storage_account_customer_managed_key :-)
+
+## Create random_string_prefix output variable
+- Date: 21/11/2023
+- File(s): output.tf
+- Who: MFR
+- PR: https://github.com/neticdk-k8s/terraform-azurerm-caf/pull/2/files
+
+### Reason:
+Added the random_string_prefix output variable, so we can use the random generated prefix which gets generated by the resource "random_string.prefix" in the local.tf file for our own Netic modules
+
+## Fix max_surge variable for nodepools
+- Date: 26/10/2023
+- File(s): modules/compute/aks/aks.tf
+- Who: MFR
+- PR: https://github.com/neticdk-k8s/terraform-azurerm-caf/pull/1/files
+
+### Reason:
+I was getting tired of configuring in my local .terraform folder everytime when I had to upgrade a cluster. I had to hardcode max_surge to 3 every time
+
+Then I also had to add max_surge in main.tf file.
+
+But now we can just add the max_surge in the main.tf file without fixing it locally in .terraform first
+
+## Remove breaking bug caused by unnecessary var.resource_location variable
+- Date: 22/09/2023
+- File(s): modules/diagnostics/module.tf
+- Who: MFR
+- PR: It's missing, sorry
+
+### Reason:
+It didn't make sense to add var.resource_location, because you already have to add the ID of the storage account.
+
+It caused a major bug in our landingzone module, because the resource_location had to be hardcoded, which doesn't make sense since we have storage accounts in different regions.

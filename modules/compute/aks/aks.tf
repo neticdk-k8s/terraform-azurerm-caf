@@ -149,6 +149,11 @@ resource "azurerm_kubernetes_cluster" "aks" {
   dns_prefix                 = try(var.settings.dns_prefix, try(var.settings.dns_prefix_private_cluster, random_string.prefix.result))
   dns_prefix_private_cluster = try(var.settings.dns_prefix_private_cluster, null)
   automatic_upgrade_channel  = try(var.settings.automatic_upgrade_channel, var.settings.automatic_channel_upgrade, null)
+  cost_analysis_enabled      = try(var.settings.cost_analysis_enabled, false)
+
+  image_cleaner_enabled        = try(var.settings.image_cleaner_enabled, null)
+  image_cleaner_interval_hours = try(var.settings.image_cleaner_interval_hours, null)
+  node_os_upgrade_channel      = try(var.settings.node_os_upgrade_channel, null)
 
   dynamic "key_management_service" {
     for_each = try(var.settings.key_management_service[*], {})
